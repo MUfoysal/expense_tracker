@@ -1,4 +1,5 @@
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -19,6 +20,7 @@ class _SignupPageState extends State<SignupPage> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -29,17 +31,76 @@ class _SignupPageState extends State<SignupPage> {
     super.dispose();
   }
 
-  void _handleSignup() {
+  Future<void> _handleSignup() async {
+    if (_isLoading) return;
     if (!_formKey.currentState!.validate()) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Firebase account creation will be connected next.'),
-      ),
-    );
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final credential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      await credential.user?.updateDisplayName(
+        _nameController.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account created successfully.'),
+        ),
+      );
+    } on FirebaseAuthException catch (error) {
+      if (!mounted) return;
+
+      final message = switch (error.code) {
+        'email-already-in-use' =>
+          'This email is already registered.',
+        'invalid-email' =>
+          'Please enter a valid email address.',
+        'weak-password' =>
+          'Your password is too weak. Use a stronger password.',
+        'operation-not-allowed' =>
+          'Email and password registration is not enabled.',
+        'network-request-failed' =>
+          'Network error. Check your internet connection.',
+        'too-many-requests' =>
+          'Too many attempts. Please try again later.',
+        _ => 'Account creation failed. Please try again.',
+      };
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Something went wrong. Please try again.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   void _handleGoogleSignUp() {
+    if (_isLoading) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Google Sign-Up will be connected next.'),
@@ -67,7 +128,6 @@ class _SignupPageState extends State<SignupPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Header
                     Row(
                       children: [
                         Container(
@@ -77,7 +137,9 @@ class _SignupPageState extends State<SignupPage> {
                             color: AppColors.primary,
                             borderRadius: BorderRadius.circular(15),
                             border: Border.all(
-                              color: AppColors.accent.withValues(alpha: 0.25),
+                              color: AppColors.accent.withValues(
+                                alpha: 0.25,
+                              ),
                             ),
                           ),
                           child: const Icon(
@@ -117,7 +179,6 @@ class _SignupPageState extends State<SignupPage> {
 
                     const SizedBox(height: 42),
 
-                    // Welcome heading
                     Row(
                       children: [
                         Container(
@@ -335,32 +396,46 @@ class _SignupPageState extends State<SignupPage> {
                     SizedBox(
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: _handleSignup,
+                        onPressed: _isLoading ? null : _handleSignup,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.accent,
                           foregroundColor: AppColors.background,
+                          disabledBackgroundColor: AppColors.accent,
+                          disabledForegroundColor: AppColors.background,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              'Create Account',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor:
+                                      AlwaysStoppedAnimation<Color>(
+                                    AppColors.background,
+                                  ),
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text(
+                                    'Create Account',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Icon(
+                                    Icons.arrow_forward_rounded,
+                                    size: 19,
+                                  ),
+                                ],
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            const Icon(
-                              Icons.arrow_forward_rounded,
-                              size: 19,
-                            ),
-                          ],
-                        ),
                       ),
                     ),
 
@@ -375,7 +450,9 @@ class _SignupPageState extends State<SignupPage> {
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                          ),
                           child: Text(
                             'OR SIGN UP WITH',
                             style: textTheme.labelSmall?.copyWith(
@@ -399,7 +476,7 @@ class _SignupPageState extends State<SignupPage> {
                     SizedBox(
                       height: 54,
                       child: OutlinedButton(
-                        onPressed: _handleGoogleSignUp,
+                        onPressed: _isLoading ? null : _handleGoogleSignUp,
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.primaryText,
                           side: const BorderSide(
@@ -438,7 +515,9 @@ class _SignupPageState extends State<SignupPage> {
                           ),
                         ),
                         TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
+                          onPressed: _isLoading
+                              ? null
+                              : () => Navigator.of(context).pop(),
                           child: const Text(
                             'Sign In',
                             style: TextStyle(
