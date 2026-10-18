@@ -7,7 +7,8 @@ class AddTransactionPage extends StatefulWidget {
   const AddTransactionPage({super.key});
 
   @override
-  State<AddTransactionPage> createState() => _AddTransactionPageState();
+  State<AddTransactionPage> createState() =>
+      _AddTransactionPageState();
 }
 
 class _AddTransactionPageState extends State<AddTransactionPage> {
@@ -40,6 +41,38 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
 
   List<String> get _categories =>
       _type == 'Income' ? _incomeCategories : _expenseCategories;
+
+  Color get _typeColor =>
+      _type == 'Income' ? AppColors.income : AppColors.expense;
+
+  IconData _categoryIcon(String category) {
+    switch (category) {
+      case 'Salary':
+        return Icons.account_balance_wallet_rounded;
+      case 'Freelance':
+        return Icons.laptop_mac_rounded;
+      case 'Business':
+        return Icons.storefront_rounded;
+      case 'Investment':
+        return Icons.trending_up_rounded;
+      case 'Food':
+        return Icons.restaurant_rounded;
+      case 'Transport':
+        return Icons.directions_car_rounded;
+      case 'Shopping':
+        return Icons.shopping_bag_rounded;
+      case 'Bills':
+        return Icons.receipt_long_rounded;
+      case 'Health':
+        return Icons.favorite_rounded;
+      case 'Education':
+        return Icons.school_rounded;
+      case 'Entertainment':
+        return Icons.movie_rounded;
+      default:
+        return Icons.category_rounded;
+    }
+  }
 
   @override
   void dispose() {
@@ -100,22 +133,22 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
 
   @override
   Widget build(BuildContext context) {
-    
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Add Transaction'),
         backgroundColor: AppColors.background,
+        surfaceTintColor: Colors.transparent,
       ),
       body: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
             children: [
               _buildTypeSelector(),
               const SizedBox(height: 28),
+
               _buildLabel('Amount'),
               const SizedBox(height: 10),
               TextFormField(
@@ -125,18 +158,19 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                 ),
                 style: const TextStyle(
                   color: AppColors.primaryText,
-                  fontSize: 24,
+                  fontSize: 28,
                   fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
                 ),
                 decoration: _inputDecoration(
                   hint: '0.00',
-                  prefix: const Padding(
-                    padding: EdgeInsets.only(right: 8),
+                  prefix: Padding(
+                    padding: const EdgeInsets.only(right: 8),
                     child: Text(
                       '৳',
                       style: TextStyle(
-                        color: AppColors.accent,
-                        fontSize: 24,
+                        color: _typeColor,
+                        fontSize: 26,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -145,106 +179,88 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                 validator: (value) {
                   final amount = double.tryParse(value?.trim() ?? '');
 
-                  if (amount == null || !amount.isFinite || amount <= 0) {
+                  if (amount == null ||
+                      !amount.isFinite ||
+                      amount <= 0) {
                     return 'Enter an amount greater than zero.';
                   }
 
                   return null;
                 },
               ),
-              const SizedBox(height: 24),
-              _buildLabel('Category'),
-              const SizedBox(height: 10),
-              DropdownButtonFormField<String>(
-                initialValue: _category,
-                dropdownColor: AppColors.surface,
-                style: const TextStyle(color: AppColors.primaryText),
-                decoration: _inputDecoration(hint: 'Select category'),
-                items: _categories.map((category) {
-                  return DropdownMenuItem(
-                    value: category,
-                    child: Text(category),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _category = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null) {
-                    return 'Please select a category.';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
-              _buildLabel('Date'),
-              const SizedBox(height: 10),
-              InkWell(
-                onTap: _pickDate,
-                borderRadius: BorderRadius.circular(14),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.divider),
+              const SizedBox(height: 26),
+
+              Row(
+                children: [
+                  _buildLabel('Category'),
+                  const Spacer(),
+                  Text(
+                    '${_categories.length} categories',
+                    style: const TextStyle(
+                      color: AppColors.secondaryText,
+                      fontSize: 12,
+                    ),
                   ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.calendar_month_rounded,
-                        color: AppColors.accent,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          '${_selectedDate.day.toString().padLeft(2, '0')}/'
-                          '${_selectedDate.month.toString().padLeft(2, '0')}/'
-                          '${_selectedDate.year}',
-                          style: const TextStyle(
-                            color: AppColors.primaryText,
-                          ),
-                        ),
-                      ),
-                      const Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: AppColors.secondaryText,
-                      ),
-                    ],
+                ],
+              ),
+              const SizedBox(height: 12),
+              _buildCategoryGrid(),
+
+              if (_category == null) ...[
+                const SizedBox(height: 8),
+                const Text(
+                  'Select a category to continue.',
+                  style: TextStyle(
+                    color: AppColors.secondaryText,
+                    fontSize: 12,
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
+              ],
+              const SizedBox(height: 26),
+
+              _buildLabel('Date'),
+              const SizedBox(height: 10),
+              _buildDateCard(),
+
+              const SizedBox(height: 26),
               _buildLabel('Description (Optional)'),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 3,
                 maxLength: 200,
-                style: const TextStyle(color: AppColors.primaryText),
+                style: const TextStyle(
+                  color: AppColors.primaryText,
+                ),
                 decoration: _inputDecoration(
                   hint: 'Add a note about this transaction',
+                ).copyWith(
+                  alignLabelWithHint: true,
+                  counterStyle: const TextStyle(
+                    color: AppColors.secondaryText,
+                  ),
                 ),
               ),
-              const SizedBox(height: 32),
+
+              const SizedBox(height: 28),
               SizedBox(
-                height: 54,
-                child: FilledButton(
+                height: 56,
+                child: FilledButton.icon(
                   onPressed: _saveTransaction,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.accent,
-                    foregroundColor: AppColors.background,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: const Text(
+                  icon: const Icon(Icons.check_circle_outline_rounded),
+                  label: const Text(
                     'Save Transaction',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.accent,
+                    foregroundColor: AppColors.background,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
                 ),
@@ -261,7 +277,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.divider),
       ),
       child: Row(
@@ -297,28 +313,172 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
             _category = null;
           });
         },
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
+        borderRadius: BorderRadius.circular(14),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 15),
           decoration: BoxDecoration(
-            color: selected ? color.withValues(alpha: 0.15) : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            border: selected ? Border.all(color: color) : null,
+            color: selected
+                ? color.withValues(alpha: 0.12)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: selected ? color : Colors.transparent,
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: color, size: 18),
+              Icon(
+                icon,
+                color: selected ? color : AppColors.secondaryText,
+                size: 19,
+              ),
               const SizedBox(width: 8),
               Text(
                 label,
                 style: TextStyle(
                   color: selected ? color : AppColors.secondaryText,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryGrid() {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _categories.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 0.95,
+      ),
+      itemBuilder: (context, index) {
+        final category = _categories[index];
+        final selected = _category == category;
+
+        return InkWell(
+          onTap: () {
+            setState(() {
+              _category = category;
+            });
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 5,
+              vertical: 12,
+            ),
+            decoration: BoxDecoration(
+              color: selected
+                  ? _typeColor.withValues(alpha: 0.12)
+                  : AppColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: selected ? _typeColor : AppColors.divider,
+                width: selected ? 1.5 : 1,
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  _categoryIcon(category),
+                  size: 25,
+                  color: selected
+                      ? _typeColor
+                      : AppColors.secondaryText,
+                ),
+                const SizedBox(height: 9),
+                Text(
+                  category,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: selected
+                        ? AppColors.primaryText
+                        : AppColors.secondaryText,
+                    fontSize: 12,
+                    fontWeight:
+                        selected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDateCard() {
+    final formattedDate =
+        '${_selectedDate.day.toString().padLeft(2, '0')}/'
+        '${_selectedDate.month.toString().padLeft(2, '0')}/'
+        '${_selectedDate.year}';
+
+    return InkWell(
+      onTap: _pickDate,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(17),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.divider),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(13),
+              ),
+              child: const Icon(
+                Icons.calendar_month_rounded,
+                color: AppColors.accent,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Transaction date',
+                    style: TextStyle(
+                      color: AppColors.secondaryText,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    formattedDate,
+                    style: const TextStyle(
+                      color: AppColors.primaryText,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: AppColors.secondaryText,
+            ),
+          ],
         ),
       ),
     );
@@ -330,7 +490,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
       style: const TextStyle(
         color: AppColors.primaryText,
         fontSize: 14,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
       ),
     );
   }
@@ -341,30 +501,47 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: AppColors.secondaryText),
-      prefixIcon: prefix,
+      hintStyle: const TextStyle(
+        color: AppColors.secondaryText,
+      ),
+      prefixIcon: prefix == null
+          ? null
+          : Padding(
+              padding: const EdgeInsets.only(left: 16, right: 8),
+              child: prefix,
+            ),
+      prefixIconConstraints: const BoxConstraints(
+        minWidth: 0,
+        minHeight: 0,
+      ),
       filled: true,
       fillColor: AppColors.surface,
-      contentPadding: const EdgeInsets.all(16),
+      contentPadding: const EdgeInsets.all(18),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         borderSide: const BorderSide(color: AppColors.divider),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         borderSide: const BorderSide(color: AppColors.divider),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(
+          color: _typeColor,
+          width: 1.5,
+        ),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         borderSide: const BorderSide(color: AppColors.expense),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: AppColors.expense, width: 1.5),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(
+          color: AppColors.expense,
+          width: 1.5,
+        ),
       ),
     );
   }
