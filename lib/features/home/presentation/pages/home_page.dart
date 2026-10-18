@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/app_bottom_navigation.dart';
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -12,21 +12,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 0;
 
-  void _onDestinationSelected(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
 
-  void _onAddPressed() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Add Transaction screen will be added next.'),
-      ),
-    );
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -185,9 +173,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () {
-                      _onDestinationSelected(1);
-                    },
+                    onPressed: null,
                     child: const Text(
                       'See all',
                       style: TextStyle(
@@ -231,15 +217,11 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 16),
             ],
           ),
-        ),
+      ),
       ),
 
       // Bottom navigation
-      bottomNavigationBar: AppBottomNavigation(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: _onDestinationSelected,
-        onAddPressed: _onAddPressed,
-      ),
+
     );
   }
 }
