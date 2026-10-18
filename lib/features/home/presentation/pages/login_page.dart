@@ -1,4 +1,5 @@
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -17,6 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -25,14 +27,63 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
+    if (_isLoading) return;
     if (!_formKey.currentState!.validate()) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Firebase authentication will be connected next.'),
-      ),
-    );
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Login successful.'),
+        ),
+      );
+    } on FirebaseAuthException catch (error) {
+      if (!mounted) return;
+
+      final message = switch (error.code) {
+        'invalid-credential' ||
+        'wrong-password' ||
+        'user-not-found' =>
+          'Invalid email or password.',
+        'invalid-email' => 'Please enter a valid email address.',
+        'too-many-requests' =>
+          'Too many attempts. Please try again later.',
+        'network-request-failed' =>
+          'Network error. Check your internet connection.',
+        'user-disabled' =>
+          'This account has been disabled.',
+        _ => 'Login failed. Please try again.',
+      };
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Something went wrong. Please try again.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   void _handleGoogleSignIn() {
@@ -63,7 +114,6 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Brand
                     Row(
                       children: [
                         Container(
@@ -73,7 +123,9 @@ class _LoginPageState extends State<LoginPage> {
                             color: AppColors.primary,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: AppColors.accent.withValues(alpha: 0.2),
+                              color: AppColors.accent.withValues(
+                                alpha: 0.2,
+                              ),
                             ),
                           ),
                           child: const Icon(
@@ -110,7 +162,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 52),
 
-                    // Decorative welcome mark
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -172,7 +223,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 36),
 
-                    // Email
                     const _FieldLabel(label: 'EMAIL ADDRESS'),
                     const SizedBox(height: 10),
 
@@ -208,7 +258,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 24),
 
-                    // Password
                     const _FieldLabel(label: 'PASSWORD'),
                     const SizedBox(height: 10),
 
@@ -255,15 +304,17 @@ class _LoginPageState extends State<LoginPage> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Password reset will be connected next.',
-                              ),
-                            ),
-                          );
-                        },
+                        onPressed: _isLoading
+                            ? null
+                            : () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Password reset will be connected next.',
+                                    ),
+                                  ),
+                                );
+                              },
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 4,
@@ -282,7 +333,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 12),
 
-                    // Primary action
                     SizedBox(
                       width: double.infinity,
                       height: 56,
@@ -292,46 +342,61 @@ class _LoginPageState extends State<LoginPage> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.accent.withValues(alpha: 0.14),
+                              color: AppColors.accent.withValues(
+                                alpha: 0.14,
+                              ),
                               blurRadius: 22,
                               offset: const Offset(0, 8),
                             ),
                           ],
                         ),
                         child: ElevatedButton(
-                          onPressed: _handleLogin,
+                          onPressed: _isLoading ? null : _handleLogin,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.transparent,
+                            disabledBackgroundColor: Colors.transparent,
                             foregroundColor: AppColors.background,
+                            disabledForegroundColor: AppColors.background,
                             shadowColor: Colors.transparent,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text(
-                                'Sign In',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800,
+                          child: _isLoading
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    valueColor:
+                                        AlwaysStoppedAnimation<Color>(
+                                      AppColors.background,
+                                    ),
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Text(
+                                      'Sign In',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    const Icon(
+                                      Icons.arrow_forward_rounded,
+                                      size: 19,
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              const SizedBox(width: 10),
-                              const Icon(
-                                Icons.arrow_forward_rounded,
-                                size: 19,
-                              ),
-                            ],
-                          ),
                         ),
                       ),
                     ),
 
                     const SizedBox(height: 30),
 
-                    // Divider
                     Row(
                       children: [
                         Expanded(
@@ -362,12 +427,11 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 22),
 
-                    // Google action
                     SizedBox(
                       width: double.infinity,
                       height: 54,
                       child: OutlinedButton(
-                        onPressed: _handleGoogleSignIn,
+                        onPressed: _isLoading ? null : _handleGoogleSignIn,
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.primaryText,
                           side: const BorderSide(
@@ -395,7 +459,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 30),
 
-                    // Sign up
                     Center(
                       child: Wrap(
                         alignment: WrapAlignment.center,
@@ -408,13 +471,15 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           TextButton(
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const SignupPage(),
-                                ),
-                              );
-                            },
+                            onPressed: _isLoading
+                                ? null
+                                : () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => const SignupPage(),
+                                      ),
+                                    );
+                                  },
                             style: TextButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 4,
