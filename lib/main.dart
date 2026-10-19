@@ -1,9 +1,9 @@
-import 'package:expense_tracker/features/home/presentation/pages/login_page.dart';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'core/theme/app_theme.dart';
-
+import 'features/authentication/presentation/pages/auth_gate.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
       title: 'Expense Tracker',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: const LoginPage(),
+      home: const AuthGate(),
     );
   }
 }

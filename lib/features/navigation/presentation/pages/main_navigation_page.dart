@@ -22,6 +22,11 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
       _selectedIndex = index;
     });
   }
+  void openTransactions() {
+  setState(() {
+    _selectedIndex = 1;
+  });
+}
 
   void _onAddPressed() {
     Navigator.of(context).push(
@@ -34,7 +39,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   @override
   Widget build(BuildContext context) {
     final pages = <Widget>[
-      const HomePage(),
+       HomePage(onSeeAllPressed: openTransactions,),
       const TransactionsPage(),
       const _PlaceholderPage(
         title: 'Reports',

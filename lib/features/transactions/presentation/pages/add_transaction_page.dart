@@ -2,19 +2,24 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../data/repositories/transaction_repository.dart';
 
 class AddTransactionPage extends StatefulWidget {
   const AddTransactionPage({super.key});
 
   @override
-  State<AddTransactionPage> createState() =>
-      _AddTransactionPageState();
+  State<AddTransactionPage> createState() => _AddTransactionPageState();
 }
 
 class _AddTransactionPageState extends State<AddTransactionPage> {
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
+
+  final TransactionRepository _transactionRepository =
+      TransactionRepository();
+
+  bool _isSaving = false;
 
   String _type = 'Expense';
   String? _category;
@@ -91,10 +96,10 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
-                  primary: AppColors.accent,
-                  onPrimary: AppColors.background,
-                  surface: AppColors.surface,
-                ),
+              primary: AppColors.accent,
+              onPrimary: AppColors.background,
+              surface: AppColors.surface,
+            ),
           ),
           child: child!,
         );
@@ -108,7 +113,9 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
     }
   }
 
-  void _saveTransaction() {
+  Future<void> _saveTransaction() async {
+    if (_isSaving) return;
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -122,13 +129,43 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Form validated. Firestore saving will be added next.',
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      await _transactionRepository.addTransaction(
+        type: _type,
+        amount: double.parse(_amountController.text.trim()),
+        category: _category!,
+        date: _selectedDate,
+        description: _descriptionController.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Transaction saved successfully.'),
         ),
-      ),
-    );
+      );
+
+      Navigator.of(context).pop(true);
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save transaction: $error'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
   }
 
   @override
@@ -246,11 +283,24 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
               SizedBox(
                 height: 56,
                 child: FilledButton.icon(
-                  onPressed: _saveTransaction,
-                  icon: const Icon(Icons.check_circle_outline_rounded),
-                  label: const Text(
-                    'Save Transaction',
-                    style: TextStyle(
+                  onPressed: _isSaving ? null : _saveTransaction,
+                  icon: _isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.background,
+                            ),
+                          ),
+                        )
+                      : const Icon(
+                          Icons.check_circle_outline_rounded,
+                        ),
+                  label: Text(
+                    _isSaving ? 'Saving...' : 'Save Transaction',
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -258,6 +308,8 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.accent,
                     foregroundColor: AppColors.background,
+                    disabledBackgroundColor:
+                        AppColors.accent.withValues(alpha: 0.5),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -307,12 +359,14 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
   }) {
     return Expanded(
       child: InkWell(
-        onTap: () {
-          setState(() {
-            _type = label;
-            _category = null;
-          });
-        },
+        onTap: _isSaving
+            ? null
+            : () {
+                setState(() {
+                  _type = label;
+                  _category = null;
+                });
+              },
         borderRadius: BorderRadius.circular(14),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
@@ -365,11 +419,13 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
         final selected = _category == category;
 
         return InkWell(
-          onTap: () {
-            setState(() {
-              _category = category;
-            });
-          },
+          onTap: _isSaving
+              ? null
+              : () {
+                  setState(() {
+                    _category = category;
+                  });
+                },
           borderRadius: BorderRadius.circular(16),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 160),
@@ -427,7 +483,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
         '${_selectedDate.year}';
 
     return InkWell(
-      onTap: _pickDate,
+      onTap: _isSaving ? null : _pickDate,
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(17),

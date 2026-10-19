@@ -1,7 +1,9 @@
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../data/repositories/transaction_repository.dart';
 
 class TransactionsPage extends StatefulWidget {
   const TransactionsPage({super.key});
@@ -13,57 +15,104 @@ class TransactionsPage extends StatefulWidget {
 class _TransactionsPageState extends State<TransactionsPage> {
   String _selectedFilter = 'All';
 
-  final List<Map<String, dynamic>> _transactions = [
-    {
-      'title': 'Monthly Salary',
-      'category': 'Salary',
-      'date': '18 Oct 2026',
-      'amount': 32000.0,
-      'type': 'Income',
-      'icon': Icons.account_balance_wallet_rounded,
-    },
-    {
-      'title': 'Food & Groceries',
-      'category': 'Food',
-      'date': '17 Oct 2026',
-      'amount': 1200.0,
-      'type': 'Expense',
-      'icon': Icons.restaurant_rounded,
-    },
-    {
-      'title': 'Transportation',
-      'category': 'Transport',
-      'date': '16 Oct 2026',
-      'amount': 350.0,
-      'type': 'Expense',
-      'icon': Icons.directions_bus_rounded,
-    },
-    {
-      'title': 'Freelance Project',
-      'category': 'Freelance',
-      'date': '15 Oct 2026',
-      'amount': 4500.0,
-      'type': 'Income',
-      'icon': Icons.laptop_mac_rounded,
-    },
-    {
-      'title': 'Internet Bill',
-      'category': 'Bills',
-      'date': '14 Oct 2026',
-      'amount': 800.0,
-      'type': 'Expense',
-      'icon': Icons.wifi_rounded,
-    },
-  ];
+  final TransactionRepository _transactionRepository =
+      TransactionRepository();
 
-  List<Map<String, dynamic>> get _filteredTransactions {
+  List<Map<String, dynamic>> _filterTransactions(
+    List<Map<String, dynamic>> transactions,
+  ) {
     if (_selectedFilter == 'All') {
-      return _transactions;
+      return transactions;
     }
 
-    return _transactions
+    return transactions
         .where((transaction) => transaction['type'] == _selectedFilter)
         .toList();
+  }
+
+  double _calculateTotal(
+    List<Map<String, dynamic>> transactions,
+    String type,
+  ) {
+    return transactions
+        .where((transaction) => transaction['type'] == type)
+        .fold<double>(
+          0,
+          (total, transaction) =>
+              total + _amountOf(transaction['amount']),
+        );
+  }
+
+  double _amountOf(dynamic value) {
+    if (value is num) {
+      return value.toDouble();
+    }
+
+    return 0;
+  }
+
+  DateTime? _dateOf(dynamic value) {
+    if (value is Timestamp) {
+      return value.toDate();
+    }
+
+    if (value is DateTime) {
+      return value;
+    }
+
+    return null;
+  }
+
+  String _formatDate(dynamic value) {
+    final date = _dateOf(value);
+
+    if (date == null) {
+      return 'Date unavailable';
+    }
+
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+
+  IconData _iconForCategory(String category) {
+    switch (category.toLowerCase()) {
+      case 'salary':
+      case 'income':
+        return Icons.account_balance_wallet_rounded;
+      case 'food':
+      case 'food & groceries':
+        return Icons.restaurant_rounded;
+      case 'transport':
+      case 'transportation':
+        return Icons.directions_bus_rounded;
+      case 'freelance':
+        return Icons.laptop_mac_rounded;
+      case 'bills':
+      case 'internet':
+        return Icons.wifi_rounded;
+      case 'shopping':
+        return Icons.shopping_bag_rounded;
+      case 'health':
+        return Icons.medical_services_rounded;
+      case 'education':
+        return Icons.school_rounded;
+      default:
+        return Icons.receipt_long_rounded;
+    }
   }
 
   @override
@@ -78,45 +127,63 @@ class _TransactionsPageState extends State<TransactionsPage> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildSummary(),
-              const SizedBox(height: 24),
-              _buildFilter(),
-              const SizedBox(height: 20),
-              Text(
-                'Transaction History',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.primaryText,
-                      fontWeight: FontWeight.bold,
+          child: StreamBuilder<List<Map<String, dynamic>>>(
+            stream: _transactionRepository.watchTransactions(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return const Center(
+                  child: Text(
+                    'Could not load transactions. Please try again.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.expense),
+                  ),
+                );
+              }
+
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData) {
+                return const Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.accent,
+                  ),
+                );
+              }
+
+              final transactions = snapshot.data ?? [];
+              final filteredTransactions =
+                  _filterTransactions(transactions);
+
+              return SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSummary(transactions),
+                    const SizedBox(height: 24),
+                    _buildFilter(),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Transaction History',
+                      style:
+                          Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: AppColors.primaryText,
+                                fontWeight: FontWeight.bold,
+                              ),
                     ),
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: _buildTransactionList(),
-              ),
-            ],
+                    const SizedBox(height: 12),
+                    _buildTransactionList(filteredTransactions),
+                  ],
+                ),
+              );
+            },
           ),
         ),
       ),
     );
   }
 
-  Widget _buildSummary() {
-    final income = _transactions
-        .where((transaction) => transaction['type'] == 'Income')
-        .fold<double>(
-          0,
-          (total, transaction) => total + (transaction['amount'] as double),
-        );
-
-    final expense = _transactions
-        .where((transaction) => transaction['type'] == 'Expense')
-        .fold<double>(
-          0,
-          (total, transaction) => total + (transaction['amount'] as double),
-        );
+  Widget _buildSummary(List<Map<String, dynamic>> transactions) {
+    final income = _calculateTotal(transactions, 'Income');
+    final expense = _calculateTotal(transactions, 'Expense');
 
     return Row(
       children: [
@@ -174,33 +241,45 @@ class _TransactionsPageState extends State<TransactionsPage> {
     );
   }
 
-  Widget _buildTransactionList() {
-    final transactions = _filteredTransactions;
-
+  Widget _buildTransactionList(
+    List<Map<String, dynamic>> transactions,
+  ) {
     if (transactions.isEmpty) {
-      return const Center(
-        child: Text(
-          'No transactions found.',
-          style: TextStyle(color: AppColors.secondaryText),
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 32),
+        child: Center(
+          child: Text(
+            'No transactions found.',
+            style: TextStyle(color: AppColors.secondaryText),
+          ),
         ),
       );
     }
 
-    return ListView.separated(
-      itemCount: transactions.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
-      itemBuilder: (context, index) {
-        final transaction = transactions[index];
+    return Column(
+      children: [
+        for (int index = 0; index < transactions.length; index++) ...[
+          if (index > 0) const SizedBox(height: 10),
+          _buildTransactionTile(transactions[index]),
+        ],
+      ],
+    );
+  }
 
-        return _TransactionTile(
-          title: transaction['title'] as String,
-          category: transaction['category'] as String,
-          date: transaction['date'] as String,
-          amount: transaction['amount'] as double,
-          isIncome: transaction['type'] == 'Income',
-          icon: transaction['icon'] as IconData,
-        );
-      },
+  Widget _buildTransactionTile(Map<String, dynamic> transaction) {
+    final category = transaction['category'] as String? ?? 'Other';
+    final description = transaction['description'] as String? ?? '';
+    final title =
+        description.trim().isNotEmpty ? description.trim() : category;
+    final isIncome = transaction['type'] == 'Income';
+
+    return _TransactionTile(
+      title: title,
+      category: category,
+      date: _formatDate(transaction['date']),
+      amount: _amountOf(transaction['amount']),
+      isIncome: isIncome,
+      icon: _iconForCategory(category),
     );
   }
 }
