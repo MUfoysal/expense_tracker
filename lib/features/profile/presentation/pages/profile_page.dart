@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../authentication/presentation/pages/login_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -62,12 +63,29 @@ class _ProfilePageState extends State<ProfilePage> {
 
     try {
       await FirebaseAuth.instance.signOut();
-    } catch (_) {
+
+      if (!mounted) return;
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(
+          builder: (_) => const LoginPage(),
+        ),
+        (route) => false,
+      );
+    } on FirebaseAuthException {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Could not log out. Please try again.'),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Something went wrong. Please try again.'),
         ),
       );
     } finally {
@@ -300,8 +318,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     const SizedBox(width: 8),
                     OutlinedButton(
-                      onPressed:
-                          _isLoggingOut ? null : _confirmLogout,
+                      onPressed: _isLoggingOut ? null : _confirmLogout,
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.expense,
                         side: const BorderSide(
