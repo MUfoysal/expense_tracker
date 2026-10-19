@@ -231,6 +231,7 @@ class _LoginPageState extends State<LoginPage> {
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       autofillHints: const [AutofillHints.email],
+                      cursorColor: AppColors.accent,
                       style: const TextStyle(
                         color: AppColors.primaryText,
                         fontSize: 14,
@@ -267,6 +268,7 @@ class _LoginPageState extends State<LoginPage> {
                       textInputAction: TextInputAction.done,
                       autofillHints: const [AutofillHints.password],
                       onFieldSubmitted: (_) => _handleLogin(),
+                      cursorColor: AppColors.accent,
                       style: const TextStyle(
                         color: AppColors.primaryText,
                         fontSize: 14,

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
 
+import '../../../navigation/presentation/pages/main_navigation_page.dart';
+
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
 
@@ -52,10 +54,12 @@ class _SignupPageState extends State<SignupPage> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Account created successfully.'),
+     
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(
+          builder: (_) => const MainNavigationPage(),
         ),
+        (route) => false,
       );
     } on FirebaseAuthException catch (error) {
       if (!mounted) return;
@@ -79,7 +83,7 @@ class _SignupPageState extends State<SignupPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
       );
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -235,6 +239,7 @@ class _SignupPageState extends State<SignupPage> {
                       textCapitalization: TextCapitalization.words,
                       textInputAction: TextInputAction.next,
                       autofillHints: const [AutofillHints.name],
+                      cursorColor: AppColors.accent,
                       style: const TextStyle(
                         color: AppColors.primaryText,
                         fontSize: 14,
@@ -268,6 +273,7 @@ class _SignupPageState extends State<SignupPage> {
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
                       autofillHints: const [AutofillHints.email],
+                      cursorColor: AppColors.accent,
                       style: const TextStyle(
                         color: AppColors.primaryText,
                         fontSize: 14,
@@ -303,6 +309,7 @@ class _SignupPageState extends State<SignupPage> {
                       obscureText: _obscurePassword,
                       textInputAction: TextInputAction.next,
                       autofillHints: const [AutofillHints.newPassword],
+                      cursorColor: AppColors.accent,
                       style: const TextStyle(
                         color: AppColors.primaryText,
                         fontSize: 14,
@@ -352,6 +359,7 @@ class _SignupPageState extends State<SignupPage> {
                       textInputAction: TextInputAction.done,
                       autofillHints: const [AutofillHints.newPassword],
                       onFieldSubmitted: (_) => _handleSignup(),
+                      cursorColor: AppColors.accent,
                       style: const TextStyle(
                         color: AppColors.primaryText,
                         fontSize: 14,
@@ -419,18 +427,18 @@ class _SignupPageState extends State<SignupPage> {
                                   ),
                                 ),
                               )
-                            : Row(
+                            : const Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Text(
-                                    'Sign In',
+                                  Text(
+                                    'Create Account',
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w800,
                                     ),
                                   ),
-                                  const SizedBox(width: 10),
-                                  const Icon(
+                                  SizedBox(width: 10),
+                                  Icon(
                                     Icons.arrow_forward_rounded,
                                     size: 19,
                                   ),

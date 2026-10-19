@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 class AppColors {
@@ -27,14 +26,10 @@ class AppColors {
   static const Color expense = Color(0xFFFF6B6B);
 
   // Balance card gradient
-  static const LinearGradient balanceCardGradient =
-      LinearGradient(
+  static const LinearGradient balanceCardGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [
-      background,
-      Color(0x992F7A3E),
-    ],
+    colors: [background, Color(0x992F7A3E)],
   );
 }
 
@@ -46,6 +41,11 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.background,
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: AppColors.neon,
+        selectionColor: Color(0x997CFF3A),
+        selectionHandleColor: AppColors.neon,
+      ),
 
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primary,
@@ -66,9 +66,7 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(
-            color: AppColors.divider,
-          ),
+          side: const BorderSide(color: AppColors.divider),
         ),
       ),
 
@@ -89,8 +87,7 @@ class AppTheme {
         thickness: 1,
       ),
 
-      floatingActionButtonTheme:
-          const FloatingActionButtonThemeData(
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: AppColors.accent,
         foregroundColor: AppColors.background,
       ),
