@@ -423,7 +423,7 @@ class _SignupPageState extends State<SignupPage> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   const Text(
-                                    'Create Account',
+                                    'Sign In',
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w800,
@@ -519,7 +519,7 @@ class _SignupPageState extends State<SignupPage> {
                               ? null
                               : () => Navigator.of(context).pop(),
                           child: const Text(
-                            'Sign In',
+                            'Log In',
                             style: TextStyle(
                               color: AppColors.accent,
                               fontWeight: FontWeight.w700,

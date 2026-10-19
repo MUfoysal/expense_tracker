@@ -3,15 +3,16 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/app_bottom_navigation.dart';
 import '../../../home/presentation/pages/home_page.dart';
+import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../transactions/presentation/pages/add_transaction_page.dart';
 import '../../../transactions/presentation/pages/transactions_page.dart';
-
 
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({super.key});
 
   @override
-  State<MainNavigationPage> createState() => _MainNavigationPageState();
+  State<MainNavigationPage> createState() =>
+      _MainNavigationPageState();
 }
 
 class _MainNavigationPageState extends State<MainNavigationPage> {
@@ -22,16 +23,17 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
       _selectedIndex = index;
     });
   }
+
   void openTransactions() {
-  setState(() {
-    _selectedIndex = 1;
-  });
-}
+    setState(() {
+      _selectedIndex = 1;
+    });
+  }
 
   void _onAddPressed() {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => 
-      const AddTransactionPage(),
+      MaterialPageRoute(
+        builder: (context) => const AddTransactionPage(),
       ),
     );
   }
@@ -39,16 +41,13 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   @override
   Widget build(BuildContext context) {
     final pages = <Widget>[
-       HomePage(onSeeAllPressed: openTransactions,),
+      HomePage(onSeeAllPressed: openTransactions),
       const TransactionsPage(),
       const _PlaceholderPage(
         title: 'Reports',
         icon: Icons.bar_chart_rounded,
       ),
-      const _PlaceholderPage(
-        title: 'Profile',
-        icon: Icons.person_rounded,
-      ),
+      const ProfilePage(),
     ];
 
     return Scaffold(
