@@ -74,11 +74,21 @@ class TransactionRepository {
         );
   }
 
-  Future<void> deleteTransaction(String transactionId) async {
-    if (transactionId.trim().isEmpty) {
-      throw ArgumentError('Transaction ID cannot be empty.');
+  Future<void> deleteAllTransactions() async {
+  while (true) {
+    final snapshot = await _transactions.limit(400).get();
+
+    if (snapshot.docs.isEmpty) {
+      break;
     }
 
-    await _transactions.doc(transactionId).delete();
+    final batch = _firestore.batch();
+
+    for (final document in snapshot.docs) {
+      batch.delete(document.reference);
+    }
+
+    await batch.commit();
   }
+}
 }
