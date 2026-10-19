@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../navigation/presentation/pages/main_navigation_page.dart';
 import 'signup_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -43,10 +44,11 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Login successful.'),
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(
+          builder: (_) => const MainNavigationPage(),
         ),
+        (route) => false,
       );
     } on FirebaseAuthException catch (error) {
       if (!mounted) return;
@@ -477,7 +479,7 @@ class _LoginPageState extends State<LoginPage> {
                                 ? null
                                 : () {
                                     Navigator.of(context).push(
-                                      MaterialPageRoute(
+                                      MaterialPageRoute<void>(
                                         builder: (_) => const SignupPage(),
                                       ),
                                     );
@@ -489,7 +491,7 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             ),
                             child: const Text(
-                              'Sign In',
+                              'Sign Up',
                               style: TextStyle(
                                 color: AppColors.accent,
                                 fontWeight: FontWeight.w700,
