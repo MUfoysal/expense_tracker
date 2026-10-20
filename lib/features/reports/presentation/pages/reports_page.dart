@@ -41,7 +41,6 @@ class _ReportsPageState extends State<ReportsPage> {
             }
 
             final transactions = snapshot.data ?? <Map<String, dynamic>>[];
-
             final report = _ReportData.fromTransactions(transactions, _period);
 
             return RefreshIndicator(
@@ -447,7 +446,8 @@ class _CashFlowCardState extends State<_CashFlowCard> {
   Widget build(BuildContext context) {
     final report = widget.report;
     final selectedIndex = _selectedIndex;
-    final selected = selectedIndex == null
+    final selected =
+        selectedIndex == null || selectedIndex >= report.buckets.length
         ? null
         : report.buckets[selectedIndex];
 
@@ -522,6 +522,7 @@ class _CashFlowCardState extends State<_CashFlowCard> {
             height: 190,
             child: _CashFlowChart(
               buckets: report.buckets,
+              period: report.period,
               selectedIndex: _selectedIndex,
               onSelect: (index) {
                 setState(() {
@@ -532,7 +533,9 @@ class _CashFlowCardState extends State<_CashFlowCard> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Select a bar to inspect the amounts.',
+            report.period == ReportPeriod.month
+                ? 'Scroll horizontally to view each day.'
+                : 'Select a bar to inspect the amounts.',
             style: TextStyle(
               color: AppColors.secondaryText.withValues(alpha: 0.85),
               fontSize: 11,
@@ -547,11 +550,13 @@ class _CashFlowCardState extends State<_CashFlowCard> {
 class _CashFlowChart extends StatelessWidget {
   const _CashFlowChart({
     required this.buckets,
+    required this.period,
     required this.selectedIndex,
     required this.onSelect,
   });
 
   final List<_ReportBucket> buckets;
+  final ReportPeriod period;
   final int? selectedIndex;
   final ValueChanged<int> onSelect;
 
@@ -561,110 +566,141 @@ class _CashFlowChart extends StatelessWidget {
       builder: (context, constraints) {
         final maxValue = buckets.fold<double>(
           0,
-          (runningTotal, bucket) =>
-              math.max(runningTotal, math.max(bucket.income, bucket.expense)),
+          (highest, bucket) =>
+              math.max(highest, math.max(bucket.income, bucket.expense)),
         );
 
         final scale = maxValue == 0 ? 1.0 : maxValue;
+        final isMonth = period == ReportPeriod.month;
+        final isYear = period == ReportPeriod.year;
 
-        return Column(
-          children: [
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: List.generate(buckets.length, (index) {
-                  final bucket = buckets[index];
-                  final selected = selectedIndex == index;
+        final barWidth = isMonth
+            ? 34.0
+            : isYear
+            ? constraints.maxWidth / 12
+            : constraints.maxWidth / 7;
 
-                  final incomeHeight = (bucket.income / scale).clamp(0.0, 1.0);
-                  final expenseHeight = (bucket.expense / scale).clamp(
-                    0.0,
-                    1.0,
-                  );
+        final chartWidth = isMonth
+            ? buckets.length * barWidth
+            : constraints.maxWidth;
 
-                  return Expanded(
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => onSelect(index),
-                      child: MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        onEnter: (_) => onSelect(index),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 3),
-                          child: Column(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    color: selected
-                                        ? AppColors.background
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(9),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 3,
-                                    vertical: 5,
-                                  ),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Expanded(
-                                        child: FractionallySizedBox(
-                                          heightFactor: incomeHeight,
-                                          alignment: Alignment.bottomCenter,
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              color: AppColors.income,
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 3),
-                                      Expanded(
-                                        child: FractionallySizedBox(
-                                          heightFactor: expenseHeight,
-                                          alignment: Alignment.bottomCenter,
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              color: AppColors.expense,
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: isMonth
+              ? const ClampingScrollPhysics()
+              : const NeverScrollableScrollPhysics(),
+          child: SizedBox(
+            width: chartWidth,
+            height: constraints.maxHeight,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: List.generate(buckets.length, (index) {
+                final bucket = buckets[index];
+                final selected = selectedIndex == index;
+
+                final incomeHeight = (bucket.income / scale).clamp(0.0, 1.0);
+                final expenseHeight = (bucket.expense / scale).clamp(0.0, 1.0);
+
+                return SizedBox(
+                  width: barWidth,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => onSelect(index),
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      onEnter: (_) {
+                        if (selectedIndex != index) {
+                          onSelect(index);
+                        }
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isMonth
+                              ? 5
+                              : isYear
+                              ? 2
+                              : 3,
+                        ),
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isYear ? 1 : 2,
+                                  vertical: 5,
                                 ),
-                              ),
-                              const SizedBox(height: 9),
-                              Text(
-                                bucket.label,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
+                                decoration: BoxDecoration(
                                   color: selected
-                                      ? AppColors.accent
-                                      : AppColors.secondaryText,
-                                  fontSize: 9,
-                                  fontWeight: selected
-                                      ? FontWeight.w700
-                                      : FontWeight.w500,
+                                      ? AppColors.background
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Expanded(
+                                      child: FractionallySizedBox(
+                                        heightFactor: incomeHeight,
+                                        alignment: Alignment.bottomCenter,
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: AppColors.income,
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: isYear ? 1 : 2),
+                                    Expanded(
+                                      child: FractionallySizedBox(
+                                        heightFactor: expenseHeight,
+                                        alignment: Alignment.bottomCenter,
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: AppColors.expense,
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(height: 9),
+                            Text(
+                              bucket.label,
+                              maxLines: 1,
+                              softWrap: false,
+                              overflow: TextOverflow.clip,
+                              style: TextStyle(
+                                color: selected
+                                    ? AppColors.accent
+                                    : AppColors.secondaryText,
+                                fontSize: isMonth
+                                    ? 9
+                                    : isYear
+                                    ? 8
+                                    : 10,
+                                fontWeight: selected
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  );
-                }),
-              ),
+                  ),
+                );
+              }),
             ),
-          ],
+          ),
         );
       },
     );
@@ -941,8 +977,8 @@ class _DonutPainter extends CustomPainter {
     if (oldDelegate.selectedIndex != selectedIndex) return true;
     if (oldDelegate.values.length != values.length) return true;
 
-    for (var i = 0; i < values.length; i++) {
-      if (oldDelegate.values[i] != values[i]) return true;
+    for (var index = 0; index < values.length; index++) {
+      if (oldDelegate.values[index] != values[index]) return true;
     }
 
     return false;
@@ -1010,8 +1046,7 @@ class _InsightsCard extends StatelessWidget {
             title: 'Transactions',
             value: '${report.transactionCount}',
             subtitle:
-                '${report.incomeCount} income · '
-                '${report.expenseCount} expenses',
+                '${report.incomeCount} income · ${report.expenseCount} expenses',
           ),
           const _InsightDivider(),
           _InsightRow(
@@ -1262,7 +1297,6 @@ class _ReportData {
             : math.max(largestExpense, amount);
 
         final category = (transaction['category'] ?? 'Other').toString().trim();
-
         final normalizedCategory = category.isEmpty ? 'Other' : category;
 
         categoryTotals.update(
@@ -1283,12 +1317,7 @@ class _ReportData {
           ..sort((a, b) => b.amount.compareTo(a.amount));
 
     final buckets = _buildBuckets(filtered, period, now);
-
-    final elapsedDays = switch (period) {
-      ReportPeriod.week => _elapsedDaysInRange(start, end, now),
-      ReportPeriod.month => _elapsedDaysInRange(start, end, now),
-      ReportPeriod.year => _elapsedDaysInRange(start, end, now),
-    };
+    final elapsedDays = _elapsedDaysInRange(start, end, now);
 
     return _ReportData(
       period: period,
@@ -1329,7 +1358,7 @@ List<_ReportBucket> _buildBuckets(
 ) {
   final count = switch (period) {
     ReportPeriod.week => 7,
-    ReportPeriod.month => 5,
+    ReportPeriod.month => DateTime(now.year, now.month + 1, 0).day,
     ReportPeriod.year => 12,
   };
 
@@ -1341,12 +1370,8 @@ List<_ReportBucket> _buildBuckets(
     const weekdays = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
     labels.addAll(weekdays);
   } else if (period == ReportPeriod.month) {
-    final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
-
-    for (var index = 0; index < count; index++) {
-      final firstDay = index * 7 + 1;
-      final lastDay = math.min(firstDay + 6, daysInMonth);
-      labels.add('$firstDay–$lastDay');
+    for (var day = 1; day <= count; day++) {
+      labels.add('$day');
     }
   } else {
     const months = [
@@ -1373,23 +1398,20 @@ List<_ReportBucket> _buildBuckets(
     final type = (transaction['type'] ?? '').toString().toLowerCase();
     final amount = _readAmount(transaction['amount']);
 
-    int index;
+    final int index;
 
     switch (period) {
       case ReportPeriod.week:
         final today = DateTime(now.year, now.month, now.day);
-
         final firstDay = today.subtract(
           Duration(days: (today.weekday - DateTime.saturday + 7) % 7),
         );
-
         final transactionDay = DateTime(date.year, date.month, date.day);
-
         index = transactionDay.difference(firstDay).inDays;
         break;
 
       case ReportPeriod.month:
-        index = (date.day - 1) ~/ 7;
+        index = date.day - 1;
         break;
 
       case ReportPeriod.year:
@@ -1419,7 +1441,6 @@ List<_ReportBucket> _buildBuckets(
 int _elapsedDaysInRange(DateTime start, DateTime end, DateTime now) {
   final today = DateTime(now.year, now.month, now.day);
   final lastDay = end.subtract(const Duration(days: 1));
-
   final effectiveEnd = today.isAfter(lastDay) ? lastDay : today;
 
   if (effectiveEnd.isBefore(start)) return 1;
@@ -1430,11 +1451,7 @@ int _elapsedDaysInRange(DateTime start, DateTime end, DateTime now) {
 DateTime? _readDate(dynamic value) {
   if (value is Timestamp) return value.toDate();
   if (value is DateTime) return value;
-
-  if (value is String) {
-    return DateTime.tryParse(value);
-  }
-
+  if (value is String) return DateTime.tryParse(value);
   return null;
 }
 
