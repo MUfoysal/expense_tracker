@@ -6,11 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../transactions/data/repositories/transaction_repository.dart';
 
-enum ReportPeriod {
-  week,
-  month,
-  year,
-}
+enum ReportPeriod { week, month, year }
 
 class ReportsPage extends StatefulWidget {
   const ReportsPage({super.key});
@@ -44,21 +40,15 @@ class _ReportsPageState extends State<ReportsPage> {
               );
             }
 
-            final transactions =
-                snapshot.data ?? <Map<String, dynamic>>[];
+            final transactions = snapshot.data ?? <Map<String, dynamic>>[];
 
-            final report = _ReportData.fromTransactions(
-              transactions,
-              _period,
-            );
+            final report = _ReportData.fromTransactions(transactions, _period);
 
             return RefreshIndicator(
               color: AppColors.accent,
               backgroundColor: AppColors.surface,
               onRefresh: () async {
-                await Future<void>.delayed(
-                  const Duration(milliseconds: 250),
-                );
+                await Future<void>.delayed(const Duration(milliseconds: 250));
               },
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
@@ -70,32 +60,20 @@ class _ReportsPageState extends State<ReportsPage> {
                   const SizedBox(height: 24),
                   _buildSummary(report),
                   const SizedBox(height: 28),
-                  _buildSectionHeading(
-                    'Cash flow',
-                    'Income vs expenses',
-                  ),
+                  _buildSectionHeading('Cash flow', 'Income vs expenses'),
                   const SizedBox(height: 14),
-                  _CashFlowCard(
-                    report: report,
-                  ),
+                  _CashFlowCard(report: report),
                   const SizedBox(height: 28),
                   _buildSectionHeading(
                     'Spending breakdown',
                     'Where your money goes',
                   ),
                   const SizedBox(height: 14),
-                  _ExpenseBreakdownCard(
-                    report: report,
-                  ),
+                  _ExpenseBreakdownCard(report: report),
                   const SizedBox(height: 28),
-                  _buildSectionHeading(
-                    'Insights',
-                    'Your financial overview',
-                  ),
+                  _buildSectionHeading('Insights', 'Your financial overview'),
                   const SizedBox(height: 14),
-                  _InsightsCard(
-                    report: report,
-                  ),
+                  _InsightsCard(report: report),
                 ],
               ),
             );
@@ -126,10 +104,7 @@ class _ReportsPageState extends State<ReportsPage> {
             ),
             const Spacer(),
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 11,
-                vertical: 8,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(12),
@@ -212,18 +187,14 @@ class _ReportsPageState extends State<ReportsPage> {
             color: selected ? AppColors.primary : Colors.transparent,
             borderRadius: BorderRadius.circular(11),
             border: selected
-                ? Border.all(
-                    color: AppColors.accent.withValues(alpha: 0.25),
-                  )
+                ? Border.all(color: AppColors.accent.withValues(alpha: 0.25))
                 : null,
           ),
           child: Text(
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: selected
-                  ? AppColors.accent
-                  : AppColors.secondaryText,
+              color: selected ? AppColors.accent : AppColors.secondaryText,
               fontSize: 12,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
             ),
@@ -379,10 +350,7 @@ class _ReportsPageState extends State<ReportsPage> {
             const Text(
               'Check your connection and try again.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.secondaryText,
-                fontSize: 13,
-              ),
+              style: TextStyle(color: AppColors.secondaryText, fontSize: 13),
             ),
             const SizedBox(height: 18),
             OutlinedButton(
@@ -539,10 +507,7 @@ class _CashFlowCardState extends State<_CashFlowCard> {
                     amount: selected.expense,
                     color: AppColors.expense,
                   ),
-                  const Divider(
-                    height: 17,
-                    color: AppColors.divider,
-                  ),
+                  const Divider(height: 17, color: AppColors.divider),
                   _TooltipRow(
                     label: 'Net',
                     amount: selected.income - selected.expense,
@@ -596,10 +561,8 @@ class _CashFlowChart extends StatelessWidget {
       builder: (context, constraints) {
         final maxValue = buckets.fold<double>(
           0,
-          (runningTotal, bucket) => math.max(
-            runningTotal,
-            math.max(bucket.income, bucket.expense),
-          ),
+          (runningTotal, bucket) =>
+              math.max(runningTotal, math.max(bucket.income, bucket.expense)),
         );
 
         final scale = maxValue == 0 ? 1.0 : maxValue;
@@ -613,10 +576,11 @@ class _CashFlowChart extends StatelessWidget {
                   final bucket = buckets[index];
                   final selected = selectedIndex == index;
 
-                  final incomeHeight =
-                      (bucket.income / scale).clamp(0.0, 1.0);
-                  final expenseHeight =
-                      (bucket.expense / scale).clamp(0.0, 1.0);
+                  final incomeHeight = (bucket.income / scale).clamp(0.0, 1.0);
+                  final expenseHeight = (bucket.expense / scale).clamp(
+                    0.0,
+                    1.0,
+                  );
 
                   return Expanded(
                     child: GestureDetector(
@@ -626,9 +590,7 @@ class _CashFlowChart extends StatelessWidget {
                         cursor: SystemMouseCursors.click,
                         onEnter: (_) => onSelect(index),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 3,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 3),
                           child: Column(
                             children: [
                               Expanded(
@@ -645,8 +607,7 @@ class _CashFlowChart extends StatelessWidget {
                                     vertical: 5,
                                   ),
                                   child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.end,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Expanded(
                                         child: FractionallySizedBox(
@@ -716,8 +677,7 @@ class _ExpenseBreakdownCard extends StatefulWidget {
   final _ReportData report;
 
   @override
-  State<_ExpenseBreakdownCard> createState() =>
-      _ExpenseBreakdownCardState();
+  State<_ExpenseBreakdownCard> createState() => _ExpenseBreakdownCardState();
 }
 
 class _ExpenseBreakdownCardState extends State<_ExpenseBreakdownCard> {
@@ -738,8 +698,8 @@ class _ExpenseBreakdownCardState extends State<_ExpenseBreakdownCard> {
     final categories = report.categoryExpenses;
     final selectedIndex = _selectedIndex;
 
-    final selectedCategory = selectedIndex != null &&
-            selectedIndex < categories.length
+    final selectedCategory =
+        selectedIndex != null && selectedIndex < categories.length
         ? categories[selectedIndex]
         : null;
 
@@ -771,10 +731,7 @@ class _ExpenseBreakdownCardState extends State<_ExpenseBreakdownCard> {
               Text(
                 'Your category breakdown will appear here.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.secondaryText,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
               ),
             ],
           ),
@@ -1052,15 +1009,14 @@ class _InsightsCard extends StatelessWidget {
             color: AppColors.accent,
             title: 'Transactions',
             value: '${report.transactionCount}',
-            subtitle: '${report.incomeCount} income · '
+            subtitle:
+                '${report.incomeCount} income · '
                 '${report.expenseCount} expenses',
           ),
           const _InsightDivider(),
           _InsightRow(
             icon: Icons.savings_outlined,
-            color: savingsRate >= 0
-                ? AppColors.income
-                : AppColors.expense,
+            color: savingsRate >= 0 ? AppColors.income : AppColors.expense,
             title: 'Savings status',
             value: report.totalIncome == 0
                 ? 'No income recorded'
@@ -1068,8 +1024,8 @@ class _InsightsCard extends StatelessWidget {
             subtitle: report.totalIncome == 0
                 ? 'Record income to calculate your savings rate'
                 : report.netSavings >= 0
-                    ? 'You spent less than you earned'
-                    : 'Your expenses exceeded your income',
+                ? 'You spent less than you earned'
+                : 'Your expenses exceeded your income',
           ),
         ],
       ),
@@ -1152,18 +1108,12 @@ class _InsightDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Divider(
-      height: 1,
-      color: AppColors.divider,
-    );
+    return const Divider(height: 1, color: AppColors.divider);
   }
 }
 
 class _LegendDot extends StatelessWidget {
-  const _LegendDot({
-    required this.color,
-    required this.label,
-  });
+  const _LegendDot({required this.color, required this.label});
 
   final Color color;
   final String label;
@@ -1184,10 +1134,7 @@ class _LegendDot extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           label,
-          style: const TextStyle(
-            color: AppColors.secondaryText,
-            fontSize: 10,
-          ),
+          style: const TextStyle(color: AppColors.secondaryText, fontSize: 10),
         ),
       ],
     );
@@ -1232,10 +1179,7 @@ class _TooltipRow extends StatelessWidget {
 }
 
 class _CategoryExpense {
-  const _CategoryExpense({
-    required this.category,
-    required this.amount,
-  });
+  const _CategoryExpense({required this.category, required this.amount});
 
   final String category;
   final double amount;
@@ -1291,9 +1235,7 @@ class _ReportData {
 
     final filtered = transactions.where((transaction) {
       final date = _readDate(transaction['date']);
-      return date != null &&
-          !date.isBefore(start) &&
-          date.isBefore(end);
+      return date != null && !date.isBefore(start) && date.isBefore(end);
     }).toList();
 
     double totalIncome = 0;
@@ -1319,12 +1261,9 @@ class _ReportData {
             ? amount
             : math.max(largestExpense, amount);
 
-        final category = (transaction['category'] ?? 'Other')
-            .toString()
-            .trim();
+        final category = (transaction['category'] ?? 'Other').toString().trim();
 
-        final normalizedCategory =
-            category.isEmpty ? 'Other' : category;
+        final normalizedCategory = category.isEmpty ? 'Other' : category;
 
         categoryTotals.update(
           normalizedCategory,
@@ -1334,21 +1273,16 @@ class _ReportData {
       }
     }
 
-    final categories = categoryTotals.entries
-        .map(
-          (entry) => _CategoryExpense(
-            category: entry.key,
-            amount: entry.value,
-          ),
-        )
-        .toList()
-      ..sort((a, b) => b.amount.compareTo(a.amount));
+    final categories =
+        categoryTotals.entries
+            .map(
+              (entry) =>
+                  _CategoryExpense(category: entry.key, amount: entry.value),
+            )
+            .toList()
+          ..sort((a, b) => b.amount.compareTo(a.amount));
 
-    final buckets = _buildBuckets(
-      filtered,
-      period,
-      now,
-    );
+    final buckets = _buildBuckets(filtered, period, now);
 
     final elapsedDays = switch (period) {
       ReportPeriod.week => _elapsedDaysInRange(start, end, now),
@@ -1371,29 +1305,20 @@ class _ReportData {
   }
 }
 
-(DateTime, DateTime) _dateRange(
-  DateTime now,
-  ReportPeriod period,
-) {
+(DateTime, DateTime) _dateRange(DateTime now, ReportPeriod period) {
   switch (period) {
     case ReportPeriod.week:
       final today = DateTime(now.year, now.month, now.day);
       final start = today.subtract(
-        Duration(days: today.weekday - DateTime.monday),
+        Duration(days: (today.weekday - DateTime.saturday + 7) % 7),
       );
       return (start, start.add(const Duration(days: 7)));
 
     case ReportPeriod.month:
-      return (
-        DateTime(now.year, now.month),
-        DateTime(now.year, now.month + 1),
-      );
+      return (DateTime(now.year, now.month), DateTime(now.year, now.month + 1));
 
     case ReportPeriod.year:
-      return (
-        DateTime(now.year),
-        DateTime(now.year + 1),
-      );
+      return (DateTime(now.year), DateTime(now.year + 1));
   }
 }
 
@@ -1413,7 +1338,7 @@ List<_ReportBucket> _buildBuckets(
   final labels = <String>[];
 
   if (period == ReportPeriod.week) {
-    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const weekdays = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
     labels.addAll(weekdays);
   } else if (period == ReportPeriod.month) {
     final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
@@ -1425,8 +1350,18 @@ List<_ReportBucket> _buildBuckets(
     }
   } else {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     labels.addAll(months);
   }
@@ -1442,13 +1377,15 @@ List<_ReportBucket> _buildBuckets(
 
     switch (period) {
       case ReportPeriod.week:
-        final firstDay = DateTime(
-          now.year,
-          now.month,
-          now.day,
-        ).subtract(Duration(days: now.weekday - DateTime.monday));
+        final today = DateTime(now.year, now.month, now.day);
 
-        index = date.difference(firstDay).inDays;
+        final firstDay = today.subtract(
+          Duration(days: (today.weekday - DateTime.saturday + 7) % 7),
+        );
+
+        final transactionDay = DateTime(date.year, date.month, date.day);
+
+        index = transactionDay.difference(firstDay).inDays;
         break;
 
       case ReportPeriod.month:
@@ -1479,11 +1416,7 @@ List<_ReportBucket> _buildBuckets(
   );
 }
 
-int _elapsedDaysInRange(
-  DateTime start,
-  DateTime end,
-  DateTime now,
-) {
+int _elapsedDaysInRange(DateTime start, DateTime end, DateTime now) {
   final today = DateTime(now.year, now.month, now.day);
   final lastDay = end.subtract(const Duration(days: 1));
 
