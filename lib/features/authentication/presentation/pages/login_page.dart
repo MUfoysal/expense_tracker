@@ -1,9 +1,8 @@
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../navigation/presentation/pages/main_navigation_page.dart';
+
 import 'signup_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -41,36 +40,23 @@ class _LoginPageState extends State<LoginPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-
-      if (!mounted) return;
-
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute<void>(
-          builder: (_) => const MainNavigationPage(),
-        ),
-        (route) => false,
-      );
     } on FirebaseAuthException catch (error) {
       if (!mounted) return;
 
       final message = switch (error.code) {
         'invalid-credential' ||
         'wrong-password' ||
-        'user-not-found' =>
-          'Invalid email or password.',
+        'user-not-found' => 'Invalid email or password.',
         'invalid-email' => 'Please enter a valid email address.',
-        'too-many-requests' =>
-          'Too many attempts. Please try again later.',
+        'too-many-requests' => 'Too many attempts. Please try again later.',
         'network-request-failed' =>
           'Network error. Check your internet connection.',
-        'user-disabled' =>
-          'This account has been disabled.',
+        'user-disabled' => 'This account has been disabled.',
         _ => 'Login failed. Please try again.',
       };
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     } catch (_) {
       if (!mounted) return;
 
@@ -90,9 +76,7 @@ class _LoginPageState extends State<LoginPage> {
 
   void _handleGoogleSignIn() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Google Sign-In will be connected next.'),
-      ),
+      const SnackBar(content: Text('Google Sign-In will be connected next.')),
     );
   }
 
@@ -105,10 +89,7 @@ class _LoginPageState extends State<LoginPage> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24,
-              vertical: 28,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 440),
               child: Form(
@@ -125,9 +106,7 @@ class _LoginPageState extends State<LoginPage> {
                             color: AppColors.primary,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: AppColors.accent.withValues(
-                                alpha: 0.2,
-                              ),
+                              color: AppColors.accent.withValues(alpha: 0.2),
                             ),
                           ),
                           child: const Icon(
@@ -249,9 +228,8 @@ class _LoginPageState extends State<LoginPage> {
                           return 'Email is required.';
                         }
 
-                        if (!RegExp(
-                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                        ).hasMatch(email)) {
+                        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                            .hasMatch(email)) {
                           return 'Enter a valid email address.';
                         }
 
@@ -346,9 +324,7 @@ class _LoginPageState extends State<LoginPage> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.accent.withValues(
-                                alpha: 0.14,
-                              ),
+                              color: AppColors.accent.withValues(alpha: 0.14),
                               blurRadius: 22,
                               offset: const Offset(0, 8),
                             ),
@@ -372,8 +348,7 @@ class _LoginPageState extends State<LoginPage> {
                                   height: 22,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2.5,
-                                    valueColor:
-                                        AlwaysStoppedAnimation<Color>(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
                                       AppColors.background,
                                     ),
                                   ),
@@ -404,10 +379,7 @@ class _LoginPageState extends State<LoginPage> {
                     Row(
                       children: [
                         Expanded(
-                          child: Container(
-                            height: 1,
-                            color: AppColors.divider,
-                          ),
+                          child: Container(height: 1, color: AppColors.divider),
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -421,10 +393,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         Expanded(
-                          child: Container(
-                            height: 1,
-                            color: AppColors.divider,
-                          ),
+                          child: Container(height: 1, color: AppColors.divider),
                         ),
                       ],
                     ),
@@ -438,9 +407,7 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: _isLoading ? null : _handleGoogleSignIn,
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.primaryText,
-                          side: const BorderSide(
-                            color: AppColors.divider,
-                          ),
+                          side: const BorderSide(color: AppColors.divider),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -534,22 +501,12 @@ class _LoginPageState extends State<LoginPage> {
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(
-        color: AppColors.secondaryText,
-        fontSize: 14,
-      ),
-      prefixIcon: Icon(
-        icon,
-        color: AppColors.secondaryText,
-        size: 20,
-      ),
+      hintStyle: const TextStyle(color: AppColors.secondaryText, fontSize: 14),
+      prefixIcon: Icon(icon, color: AppColors.secondaryText, size: 20),
       suffixIcon: suffix,
       filled: true,
       fillColor: AppColors.surface,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 18,
-        vertical: 19,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 19),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: const BorderSide(color: AppColors.divider),
@@ -560,10 +517,7 @@ class _LoginPageState extends State<LoginPage> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(
-          color: AppColors.accent,
-          width: 1.4,
-        ),
+        borderSide: const BorderSide(color: AppColors.accent, width: 1.4),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -571,10 +525,7 @@ class _LoginPageState extends State<LoginPage> {
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(
-          color: AppColors.expense,
-          width: 1.4,
-        ),
+        borderSide: const BorderSide(color: AppColors.expense, width: 1.4),
       ),
     );
   }
@@ -590,10 +541,10 @@ class _FieldLabel extends StatelessWidget {
     return Text(
       label,
       style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: AppColors.secondaryText,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.1,
-          ),
+        color: AppColors.secondaryText,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.1,
+      ),
     );
   }
 }
