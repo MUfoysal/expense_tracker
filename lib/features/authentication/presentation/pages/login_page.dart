@@ -609,24 +609,18 @@ class _FieldLabel extends StatelessWidget {
   }
 }
 
+
 class _GoogleMark extends StatelessWidget {
   const _GoogleMark();
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
+    return Image.asset(
+      'assets/images/google_logo.png',
       width: 22,
       height: 22,
-      child: Center(
-        child: Text(
-          'G',
-          style: TextStyle(
-            color: Color(0xFF4285F4),
-            fontSize: 23,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ),
+      fit: BoxFit.contain,
     );
   }
 }
+
