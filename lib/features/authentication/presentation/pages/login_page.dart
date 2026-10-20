@@ -1,8 +1,9 @@
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
-
 import 'signup_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -55,8 +56,9 @@ class _LoginPageState extends State<LoginPage> {
         _ => 'Login failed. Please try again.',
       };
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
     } catch (_) {
       if (!mounted) return;
 
@@ -74,10 +76,63 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  void _handleGoogleSignIn() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Google Sign-In will be connected next.')),
-    );
+  Future<void> _handleGoogleSignIn() async {
+    if (_isLoading) return;
+
+    if (!kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Google Sign-In is currently available on Web only.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await FirebaseAuth.instance.signInWithPopup(
+        GoogleAuthProvider(),
+      );
+    } on FirebaseAuthException catch (error) {
+      if (!mounted) return;
+
+      final message = switch (error.code) {
+        'popup-closed-by-user' => 'Google sign-in was cancelled.',
+        'popup-blocked' => 'The browser blocked the Google sign-in popup.',
+        'unauthorized-domain' =>
+          'This domain is not authorized in Firebase.',
+        'operation-not-allowed' =>
+          'Google Sign-In is not enabled in Firebase.',
+        'network-request-failed' =>
+          'Network error. Check your internet connection.',
+        'account-exists-with-different-credential' =>
+          'An account already exists with this email. Try another sign-in method.',
+        _ => 'Google sign-in failed. Please try again.',
+      };
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Something went wrong. Please try again.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -89,7 +144,10 @@ class _LoginPageState extends State<LoginPage> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 28,
+            ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 440),
               child: Form(
@@ -140,9 +198,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 52),
-
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -178,9 +234,7 @@ class _LoginPageState extends State<LoginPage> {
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 22),
-
                     Text(
                       'Welcome\nback.',
                       style: textTheme.headlineLarge?.copyWith(
@@ -191,9 +245,7 @@ class _LoginPageState extends State<LoginPage> {
                         color: AppColors.primaryText,
                       ),
                     ),
-
                     const SizedBox(height: 14),
-
                     Text(
                       'Take a breath. Get a clear picture of your money.',
                       style: textTheme.bodyLarge?.copyWith(
@@ -201,12 +253,9 @@ class _LoginPageState extends State<LoginPage> {
                         height: 1.6,
                       ),
                     ),
-
                     const SizedBox(height: 36),
-
                     const _FieldLabel(label: 'EMAIL ADDRESS'),
                     const SizedBox(height: 10),
-
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
@@ -236,12 +285,9 @@ class _LoginPageState extends State<LoginPage> {
                         return null;
                       },
                     ),
-
                     const SizedBox(height: 24),
-
                     const _FieldLabel(label: 'PASSWORD'),
                     const SizedBox(height: 10),
-
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
@@ -282,7 +328,6 @@ class _LoginPageState extends State<LoginPage> {
                         return null;
                       },
                     ),
-
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
@@ -312,9 +357,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 12),
-
                     SizedBox(
                       width: double.infinity,
                       height: 56,
@@ -353,18 +396,18 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                   ),
                                 )
-                              : Row(
+                              : const Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Text(
+                                    Text(
                                       'Log In',
                                       style: TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w800,
                                       ),
                                     ),
-                                    const SizedBox(width: 10),
-                                    const Icon(
+                                    SizedBox(width: 10),
+                                    Icon(
                                       Icons.arrow_forward_rounded,
                                       size: 19,
                                     ),
@@ -373,13 +416,14 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 30),
-
                     Row(
                       children: [
                         Expanded(
-                          child: Container(height: 1, color: AppColors.divider),
+                          child: Container(
+                            height: 1,
+                            color: AppColors.divider,
+                          ),
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -393,21 +437,25 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         Expanded(
-                          child: Container(height: 1, color: AppColors.divider),
+                          child: Container(
+                            height: 1,
+                            color: AppColors.divider,
+                          ),
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 22),
-
                     SizedBox(
                       width: double.infinity,
                       height: 54,
                       child: OutlinedButton(
-                        onPressed: _isLoading ? null : _handleGoogleSignIn,
+                        onPressed:
+                            _isLoading ? null : _handleGoogleSignIn,
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.primaryText,
-                          side: const BorderSide(color: AppColors.divider),
+                          side: const BorderSide(
+                            color: AppColors.divider,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -427,9 +475,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 30),
-
                     Center(
                       child: Wrap(
                         alignment: WrapAlignment.center,
@@ -468,9 +514,7 @@ class _LoginPageState extends State<LoginPage> {
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 20),
-
                     Center(
                       child: Text(
                         'SECURE ACCESS  •  PRIVATE BY DESIGN',
@@ -501,12 +545,22 @@ class _LoginPageState extends State<LoginPage> {
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: AppColors.secondaryText, fontSize: 14),
-      prefixIcon: Icon(icon, color: AppColors.secondaryText, size: 20),
+      hintStyle: const TextStyle(
+        color: AppColors.secondaryText,
+        fontSize: 14,
+      ),
+      prefixIcon: Icon(
+        icon,
+        color: AppColors.secondaryText,
+        size: 20,
+      ),
       suffixIcon: suffix,
       filled: true,
       fillColor: AppColors.surface,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 19),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 18,
+        vertical: 19,
+      ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
         borderSide: const BorderSide(color: AppColors.divider),
@@ -517,7 +571,10 @@ class _LoginPageState extends State<LoginPage> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: AppColors.accent, width: 1.4),
+        borderSide: const BorderSide(
+          color: AppColors.accent,
+          width: 1.4,
+        ),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -525,7 +582,10 @@ class _LoginPageState extends State<LoginPage> {
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: AppColors.expense, width: 1.4),
+        borderSide: const BorderSide(
+          color: AppColors.expense,
+          width: 1.4,
+        ),
       ),
     );
   }
